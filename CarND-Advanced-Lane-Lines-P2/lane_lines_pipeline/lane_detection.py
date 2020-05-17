@@ -53,26 +53,23 @@ class LaneDetection(object):
         # distance in metres of the vehicle centre from the centre
         # of the ego lane
         self._line_base_pos = None
-
+        
+        # The x coordinate in the image telling us where the lane
+        # starts (from the bottom of the image)
+        self._lane_right_start = None
+        self._lane_left_start = None        
+        
         # Camera calibration directory
         self._camera_calibration_dir = camera_calibration_dir
 
         # Perform calibration to get parameters
         self._calibration_obj = CameraCalibration(self._camera_calibration_dir)
         self._calibration_obj.perform_calibration()
-
-        # The x coordinate in the image telling us where the lane
-        # starts (from the bottom of the image)
-        self._lane_right_start_prev = None
-        self._lane_left_start_prev = None
-        self._lane_right_start = None
-        self._lane_left_start = None
-
-        # Hyperparameters for lane searching
+        
+        # Hyperparameters captured from constructor
         self._nwindows = nwindows
         self._margin = margin
         self._minpix = minpix
-
         self._vertices = vertices
         self._smoothing_window_size = smoothing_window_size
         self._debug = debug
@@ -88,26 +85,15 @@ class LaneDetection(object):
         self._x_relevant = 720
         self._y_relevant = 700
 
-        # Keep track of the shape of each frame
-        self._img_shape = None
-
-        # Percentage change to decide if we need to use brute-force or
-        # lookahead filter
-        self._perc_change = 5
-
-        # Stores the change in norms of the fit coefficients
-        self._left_fit_norm = None
-        self._right_fit_norm = None
-
     def reset(self):
         """Resets everything back to the initial state
         """
-        self._recent_xfitted_left = None
-        self._recent_xfitted_right = None
+        self._detected = False
 
-        self._bestx_left = None
-        self._bestx_right = None
+        self._frame_counter = 0
 
+        self._fit_left = None
+        self._fit_right = None
         self._best_fit_left = None
         self._best_fit_right = None
 
@@ -118,15 +104,9 @@ class LaneDetection(object):
         self._radius_of_curvature_prev = None
 
         self._line_base_pos = None
-        self._img_shape = None
-
-        self._lane_right_start_prev = None
-        self._lane_left_start_prev = None
-        self._lane_right_start = None
-        self._lane_left_start = None
         
-        self._frame_counter = 0
-        self._detected = False
+        self._lane_right_start = None
+        self._lane_left_start = None  
 
     def __distance_from_centre(self, width):
         """ Internal method to calculate the distance to the centre of the lane
@@ -211,12 +191,7 @@ class LaneDetection(object):
         self._radius_of_curvature_prev = self._radius_of_curvature
 
         ### Step #1 - Apply distortion correction to the image
-        if self._img_shape is None:
-            self._img_shape = img.shape[:2]
-            self._recent_xfitted_left = np.zeros(
-                (self._smoothing_window_size, img.shape[0]))
-            self._recent_xfitted_right = np.zeros(
-                (self._smoothing_window_size, img.shape[0]))
+        if self._frame_counter == 0:
             self._fit_left = np.zeros((self._smoothing_window_size, 3))
             self._fit_right = np.zeros((self._smoothing_window_size, 3))
         results = {}

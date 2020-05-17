@@ -455,8 +455,6 @@ class UdacityUtils(object):
             A warped image such that the corners of the polygonal region of
             interest map to the four corners of the original image dimensions
         """
-        #                   BL          TL          TR          BR
-        # src = np.float32([[230, 683], [577, 456], [695, 456], [1060, 683]])
         src = np.float32(vertices)
         
         # The output region is such that it spans the entire image by
