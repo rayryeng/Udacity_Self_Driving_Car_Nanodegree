@@ -167,8 +167,8 @@ class LaneDetection(object):
         # Calculate the new radii of curvature
         Aleft, Bleft = left_fit_cr[:2]
         Aright, Bright = right_fit_cr[:2]
-        left_curverad = (1 + (2 * Aleft * y_eval + Bleft)** 2)**1.5 / (np.abs(2*Aleft))
-        right_curverad = (1 + (2 * Aright * y_eval + Bright)** 2)**1.5 / (np.abs(2*Aright))
+        left_curverad = (1 + (2 * Aleft * y_eval + Bleft)** 2)**1.5 / (np.abs(2 * Aleft))
+        right_curverad = (1 + (2 * Aright * y_eval + Bright)** 2)**1.5 / (np.abs(2 * Aright))
 
         # To consolidate the two together, simply find the average
         return (left_curverad + right_curverad) / 2.0
@@ -189,6 +189,9 @@ class LaneDetection(object):
                 area shaded and the off-centre distance and curvature shown
             """
         self._radius_of_curvature_prev = self._radius_of_curvature
+        
+        ### Step #0 - Gaussian Blur the image to reduce noise
+        blur = UdacityUtils.gaussian_blur(img, kernel_size=5)
 
         ### Step #1 - Apply distortion correction to the image
         if self._frame_counter == 0:
@@ -196,7 +199,7 @@ class LaneDetection(object):
             self._fit_right = np.zeros((self._smoothing_window_size, 3))
         results = {}
         
-        undist = self._calibration_obj.undistort_image(img)
+        undist = self._calibration_obj.undistort_image(blur)
         if self._debug:
             results['undist'] = undist
 
@@ -209,7 +212,8 @@ class LaneDetection(object):
             results['edges'] = edges        
         bev = UdacityUtils.warp_image(edges, self._vertices)
         if self._debug:
-            results['bev'] = bev        
+            results['bev_edges'] = bev
+            results['bev'] = UdacityUtils.warp_image(undist, self._vertices)
 
         ### Step #4 - Sanity check
         # If we don't detect a line, use brute-force
