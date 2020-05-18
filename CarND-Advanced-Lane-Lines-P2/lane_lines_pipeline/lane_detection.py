@@ -48,7 +48,6 @@ class LaneDetection(object):
 
         # radius of curvature of the line in metres
         self._radius_of_curvature = None
-        self._radius_of_curvature_prev = None
 
         # distance in metres of the vehicle centre from the centre
         # of the ego lane
@@ -101,7 +100,6 @@ class LaneDetection(object):
         self._current_fit_right = None
 
         self._radius_of_curvature = None
-        self._radius_of_curvature_prev = None
 
         self._line_base_pos = None
         
@@ -186,19 +184,24 @@ class LaneDetection(object):
 
             Returns:
                 An copy of the input image with the lanes marked, the drivable
-                area shaded and the off-centre distance and curvature shown
+                area shaded and the off-centre distance and curvature shown.
+                We also return a dictionary of debug results if debugging is
+                enabled.  These both are returned as a tuple.  If debugging is
+                not enabled, the second element of this tuple is None.
             """
-        self._radius_of_curvature_prev = self._radius_of_curvature
         
         ### Step #0 - Gaussian Blur the image to reduce noise
         blur = UdacityUtils.gaussian_blur(img, kernel_size=5)
 
-        ### Step #1 - Apply distortion correction to the image
         if self._frame_counter == 0:
+            # Create storage the last n polynomial coefficients
             self._fit_left = np.zeros((self._smoothing_window_size, 3))
             self._fit_right = np.zeros((self._smoothing_window_size, 3))
+
+        # Store debug results
         results = {}
         
+        ### Step #1 - Apply distortion correction to the image
         undist = self._calibration_obj.undistort_image(blur)
         if self._debug:
             results['undist'] = undist
@@ -294,4 +297,4 @@ class LaneDetection(object):
         if self._debug:
             return output_image, results
         else:
-            return output_image
+            return output_image, None
