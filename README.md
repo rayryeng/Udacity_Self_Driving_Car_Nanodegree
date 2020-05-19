@@ -5,3 +5,7 @@ In this repo, it contains the projects I worked on for the Self-Driving Car Nano
 ## Project #1 - Simple Lane Finding Algorithm
 
 This directory contains a method using simple computer vision algorithms to help localise where lanes are with respect to the ego vehicle.  Given sample images from the front camera of a car on a highway, we determine the left and right lanes for the car.  Please navigate to the `CarND-LaneLines-P1` directory for more details.  The report can be found in this directory under `reflection_report.md`.
+
+## Project #2 - Advanced Lane Finding Algorithm
+
+This directory contains a method using more advanced computer vision algorithms to help localise where lanes are with respect to the ego vehicle.  The objective and criteria for performance evaluation are the same as Project #1.  Please navigate to the `CarND-Advanced-Lane-Lines-P2` directory for more details.  The report can be found in this directory under `reflection_report.md`.
