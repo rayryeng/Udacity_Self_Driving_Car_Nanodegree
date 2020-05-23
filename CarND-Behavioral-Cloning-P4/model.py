@@ -14,7 +14,8 @@ from random import uniform, Random
 from sklearn.utils import shuffle
 from math import ceil
 
-def load_data(di, steering_correction=0.2, test_size=0.2, seed=None):
+def load_data(di, steering_correction=0.2, training_size=0.8, validation_size=0.1,
+              test_size=0.1, seed=None):
     """ Function that finds all image filenames and corresponding driving data
     from the CSV files generated from the simulator given the directory of where
     the data was extracted to
@@ -23,16 +24,31 @@ def load_data(di, steering_correction=0.2, test_size=0.2, seed=None):
         di (str): Directory where the CSV files are located
         steering_correction (float): Steering correction to add for left and
                                      right camera images
-        test_size (float): Fraction of the data to allocate to the validation
-                           dataset
+        training_size (float): Fraction of the data to allocate to the training
+                               dataset
+        validation_size (float): Fraction of the data to allocate to the validation
+                                 dataset
+        test_size (float): Fraction of the data to allocate to the test dataset
         seed (int): Specify random seed for reproducibility.  Set to None to
-                    use default (not reproducible)
+                    perform no randomisation.
 
     Returns:
         A tuple of two lists containing the paths to the image data and
         the relevant vehicle data.  The first list is the training data
         and the second list is the validation data.
     """
+    if training_size <= 0 or training_size >= 1:
+        raise Exception("Training size must be between 0 and 1")
+    if validation_size <= 0 or validation_size >= 1:
+        raise Exception("Validation size must be between 0 and 1")
+    if test_size <= 0 or test_size >= 1:
+        raise Exception("Test size must be between 0 and 1")
+
+    sum_size = training_size + validation_size + test_size
+    training_size /= sum_size
+    validation_size /= sum_size
+    test_size /= sum_size
+
     csvfiles = glob.glob(di)
 
     # Contains every driving sample over all possible files
@@ -63,17 +79,27 @@ def load_data(di, steering_correction=0.2, test_size=0.2, seed=None):
                 # Doing this for the centre, left and right images
                 for i in range(3):
                     line[i] = os.path.join(main_dir, line[i].strip())
-                
+
                 # Directly add the image path and steering
                 steering = float(line[3])
-                for j, val in enumerate([0, steering_correction, -steering_correction]): 
+                for j, val in enumerate([0, steering_correction, -steering_correction]):
                     samples.append((line[j], steering + val))
 
+    # Get the test dataset first
+    split_point = int((training_size + validation_size) * len(samples))
+    test_samples = samples[split_point:]
+
     # Split the data up into train and validation
-    train_samples, validation_samples = train_test_split(samples,
-                                                         random_state=seed,
-                                                         test_size=test_size)
-    return train_samples, validation_samples
+    if seed is not None:
+        train_samples, validation_samples = train_test_split(samples[:split_point],
+                                                            random_state=seed,
+                                                            test_size=validation_size)
+    else:
+        split_point_train = int(training_size * len(samples))
+        train_samples = samples[:split_point_train]
+        validation_samples = samples[split_point_train:split_point]
+
+    return train_samples, validation_samples, test_samples
 
 def generator(samples, batch_size=32, prob_flip=0.3, seed=None):
     """ Generator to produce a batch of images for Keras
@@ -88,20 +114,22 @@ def generator(samples, batch_size=32, prob_flip=0.3, seed=None):
     """
     samples_copy = samples[:]
     num_samples = len(samples_copy)
-    r = Random(seed)
+    if seed is not None:
+        r = Random(seed)
     while True: # Loop forever so the generator never terminates
         # Randomly shuffle the samples
-        r.shuffle(samples_copy)
+        if seed is not None:
+            r.shuffle(samples_copy)
 
         # For each batch...
         for i in range(0, num_samples, batch_size):
             # To send to the output
             X = []
             y = []
-            
+
             # Get the batch
             batch = samples_copy[i : i + batch_size]
-            
+
             # For each element in the batch...
             for filename, steering in batch:
                 # Obtain the filename and read the image in
@@ -113,27 +141,29 @@ def generator(samples, batch_size=32, prob_flip=0.3, seed=None):
                 # If we flip horizontally, the steering also needs to be
                 # corrected too
                 if prob_flip is not None:
-                    if r.uniform(0.0, 1.0) <= prob_flip:
+                    un = r.uniform(0.0, 1.0) if seed is not None else uniform(0.0, 1.0)
+                    if un <= prob_flip:
                         img = np.fliplr(img)
                         steering = -steering
 
                 # Add to the list
                 X.append(img)
                 y.append(steering)
-            
+
             # Convert the lists to numpy arrays
             X = np.array(X)
             y = np.array(y)
 
             # Randomly shuffle this batch to be really sure then
             # send it off
-            X, y = shuffle(X, y, random_state=r.randint(0, 2**32 - 1))
+            if seed is not None:
+                X, y = shuffle(X, y, random_state=r.randint(0, 2**32 - 1))
             yield X, y
 
 def define_model():
     """Define model architecture for inferring the steering angle given
     a front-facing camera image
-    
+
     Returns:
         The Tensorflow model compiled using Adam with the default parameters
         and MSE as the loss
@@ -154,7 +184,7 @@ def define_model():
     model.add(Dropout(0.2, name='dropout1'))
     model.add(Dense(512, name='fc1'))
     model.add(ReLU(name='relu4'))
-    model.add(Dropout(0.2, name='dropout2'))    
+    model.add(Dropout(0.2, name='dropout2'))
     model.add(Dense(1, name='output'))
 
     model.compile(optimizer="adam", loss="mse")
@@ -162,16 +192,19 @@ def define_model():
     return model
 
 def main(data_dir, model_checkpoint_dir='./models', model_output_dir='./checkpoint',
-         test_size=0.2, steering_correction=0.2, prob_flip=0.3, batch_size=64,
-         num_epochs=50, plot_loss=True, seed=42):
+         training_size=0.8, validation_size=0.1, test_size=0.1, steering_correction=0.2,
+         prob_flip=0.3, batch_size=64, num_epochs=50, plot_loss=True, seed=42):
     """ Main function to run for the training
-    
+
     Args:
         data_dir (str): Directory where driving data is stored
         model_checkpoint_dir (str): Directory where to save model checkpoints
         model_output_dir (str); Directory where to save final output model
-        test_size (float): Fraction of the data to allocate to the validation
-                           dataset
+        training_size (float): Fraction of the data to allocate to the training
+                               dataset
+        validation_size (float): Fraction of the data to allocate to the validation
+                                 dataset
+        test_size (float): Fraction of the data to allocate to the test dataset
         steering_correction (float): Steering correction to add for left and
                                      right camera images
         prob_flip (float): Probability for horizontally flipping an image (augmentation)
@@ -179,22 +212,22 @@ def main(data_dir, model_checkpoint_dir='./models', model_output_dir='./checkpoi
         num_epochs (int): Total number of epochs
         plot_loss (bool): Plot the training and validation losses
         seed (int): Random seed for reproducibility
-    
+
     Returns:
         A tuple of two NumPy arrays that record the training and validation loss
         at each epoch.  As a side-effect, the final model gets saved to
         model_output_dir in a file called steering.hdf5 for use with Tensorflow
         later
     """
-    
+
     # Set to true if you want to see the loss plots
     if plot_loss:
         import matplotlib.pyplot as plt
         plt.rcParams['figure.figsize'] = (16, 12)
-    
+
     # Get the training and validation data
     dir_path = os.path.join(data_dir, '**', '*.csv')
-    train_samples, validation_samples = load_data(dir_path,
+    train_samples, validation_samples, test_samples = load_data(dir_path,
                                         steering_correction=steering_correction,
                                         test_size=test_size, seed=seed)
 
@@ -203,9 +236,15 @@ def main(data_dir, model_checkpoint_dir='./models', model_output_dir='./checkpoi
                                 prob_flip=prob_flip, seed=seed)
     # We must ensure that the probability of flipping for the validation
     # is disabled as we need a base of comparison for the loss.  Introducing
-    # randomness loses our base of comparison
+    # randomness loses our base of comparison.  We also don't need to
+    # shuffle anything
     validation_generator = generator(validation_samples, batch_size=batch_size,
-                                     prob_flip=None, seed=seed)
+                                     prob_flip=None, seed=None)
+
+    # Same situation applies with the test set
+    test_generator = generator(test_samples, batch_size=batch_size,
+                               prob_flip=None, seed=None)
+
 
     # Get the model
     model = define_model()
@@ -235,8 +274,12 @@ def main(data_dir, model_checkpoint_dir='./models', model_output_dir='./checkpoi
     try:
         os.makedirs(model_output_dir)
     except OSError:
-        pass    
+        pass
     model.save(os.path.join(model_output_dir, "steering.hdf5"))
+
+    # Also evaluate the test dataset
+    test_loss = model.evaluate(x=test_generator, y=None, batch_size=batch_size,
+                               verbose=1, steps=ceil(len(test_samples) / batch_size))
 
     # Plot the training and validation loss over the epochs
     if plot_loss:
@@ -248,18 +291,23 @@ def main(data_dir, model_checkpoint_dir='./models', model_output_dir='./checkpoi
         plt.xlabel('Epoch')
         plt.legend(['Training', 'Validation'], loc='upper right')
         plt.show()
-    
-    return history.history['loss'], history.history['val_loss']
 
-if __name__ == "__main__":    
+    return history.history['loss'], history.history['val_loss'], test_loss
+
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Behavioural Cloning Training')
     parser.add_argument("--data-dir", type=str, help="Directory where driving data is stored")
     parser.add_argument("--model-checkpoint-dir", type=str, default="./checkpoint", help="Directory where to save model checkpoints")
     parser.add_argument("--model-output-dir", type=str, default="./models", help="Directory where to save final output model")
+    parser.add_argument("--training-size", type=float, default=0.8, help="Fraction of the data to allocate to the training set")
+    parser.add_argument("--validation-size", type=float, default=0.1, help="Fraction of the data to allocate to the validation set")
+    parser.add_argument("--test-size", type=float, default=0.1, help="Fraction of the data to allocate to the test set")
+    parser.add_argument("--steering_correction", type=float, default=0.2, help="Steering correction to add for left and right camera images")
     parser.add_argument("--prob-flip", type=float, default=0.3, help="Probability for horizontally flipping an image (augmentation)")
     parser.add_argument("--batch-size", type=int, default=64, help="Batch size")
+    parser.add_argument("--num-epochs", type=int, default=50, help="Number of epochs")
     parser.add_argument("--plot-loss", action="store_true", help="Plot the training and validation losses")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility")
     args = parser.parse_args()
-    
+
     main(**args)
