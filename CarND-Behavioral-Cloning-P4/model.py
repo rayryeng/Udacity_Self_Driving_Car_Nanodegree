@@ -3,6 +3,7 @@ import argparse
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Input, Conv2D, Dense, Dropout, Flatten, Lambda, ReLU
+from tensorflow.keras.callbacks import ModelCheckpoint
 import cv2
 import csv
 import numpy as np
@@ -198,8 +199,11 @@ def main(data_dir, model_checkpoint_dir='./models', model_output_dir='./checkpoi
     # Create generator objects
     train_generator = generator(train_samples, batch_size=batch_size,
                                 prob_flip=prob_flip, seed=seed)
+    # We must ensure that the probability of flipping for the validation
+    # is disabled as we need a base of comparison for the loss.  Introducing
+    # randomness loses our base of comparison
     validation_generator = generator(validation_samples, batch_size=batch_size,
-                                     prob_flip=prob_flip, seed=seed)
+                                     prob_flip=None, seed=seed)
 
     # Get the model
     model = define_model()
@@ -210,15 +214,14 @@ def main(data_dir, model_checkpoint_dir='./models', model_output_dir='./checkpoi
     except OSError:
         pass
     filepath = os.path.join(model_checkpoint_dir, 'best_weights.hdf5')
-    model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-        filepath=filepath,
-        save_weights_only=False,
-        monitor='val_loss',
-        mode='min',
-        save_best_only=True)
+    model_checkpoint_callback = ModelCheckpoint(filepath=filepath,
+                                                save_weights_only=False,
+                                                monitor='val_loss',
+                                                mode='min',
+                                                save_best_only=True)
 
     # Perform the training
-    history = model.fit_generator(train_generator,
+    history = model.fit(x=train_generator, y=None,
                 steps_per_epoch=ceil(len(train_samples) / batch_size),
                 validation_data=validation_generator,
                 validation_steps=ceil(len(validation_samples) / batch_size),
