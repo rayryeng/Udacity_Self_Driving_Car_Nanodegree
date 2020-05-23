@@ -9,3 +9,7 @@ This directory contains a method using simple computer vision algorithms to help
 ## Project #2 - Advanced Lane Finding Algorithm
 
 This directory contains a method using more advanced computer vision algorithms to help localise where lanes are with respect to the ego vehicle.  The objective and criteria for performance evaluation are the same as Project #1.  Please navigate to the `CarND-Advanced-Lane-Lines-P2` directory for more details.  The report can be found in this directory under `reflection_report.md`.
+
+## Project #3 - Traffic Sign Classification Algorithm
+
+This directory contains a method using deep learning to classify traffic sign images.  We specifically explore the dataset used for training this system and provide an architecture that performs the classification well on the training, validation and test dataset.  Please navigate to the `CarND-Traffic-Sign-Classification-Project-P3` directory for more details.  The report can be found in this directory under `final_report.md`.

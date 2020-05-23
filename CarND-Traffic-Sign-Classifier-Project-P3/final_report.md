@@ -1,4 +1,4 @@
-# **Traffic Sign Recognition** 
+# **Traffic Sign Recognition**
 
 ## Reflection Report
 
@@ -17,7 +17,7 @@ Other relevant quantities are:
 * The size of training set is 34799
 * The size of the validation set is 4410
 * The size of test set is 12630
-* The shape of a traffic sign image is 32 x 32
+* The shape of a traffic sign image is 32 x 32 x 3 - they are colour images
 * The number of unique classes/labels in the data set is 43
 
 ## Exploratory Visualisation
@@ -42,7 +42,7 @@ We can see that the signs are contained within a variety of backgrounds, lightin
 
 ### Preprocessing steps
 
-I decided to leave the colour information in as they are powerful visual cues in how we identify signs.  Red signs mean to proceed with caution while yellow or green signs are to be taken less seriously.  Converting to grayscale would lose this semantic information.  However, I did normalise the images so that the range of intensities spans from `[-1,1]`.  You simply subtract all values over all channels by 128, then divide by 128.
+I decided to leave the colour information in as they are powerful visual cues in how we identify signs.  Red signs mean to proceed with caution while yellow or green signs are to be taken less seriously.  Converting to grayscale would lose this semantic information.  However, I did normalise the images so that the range of intensities spans from `[-1,1]`.  Normalisation helps with training neural networks as it would be safer in terms of precision and training.  If the raw activations of the layers were to get too large, the minimisation would become numerically unstable.  Therefore for normaisation, you simply subtract all values over all channels by 128, then divide by 128.
 
 ### Model Architecture
 
@@ -56,16 +56,16 @@ The network is not too deep, but deep enough to extract meaningful features from
 
 Therefore, my final model consisted of the following layers:
 
-| Layer         		|     Description	        					| 
-|:---------------------:|:-------------------------------------------:| 
-| Input         		| 32x32x3 RGB image   
-|                       |							
+| Layer         		|     Description	        					|
+|:---------------------:|:-------------------------------------------:|
+| Input         		| 32x32x3 RGB image
+|                       |
 | Convolution 5x5     	| 1x1 stride, valid padding, outputs 28x28x16
-| RELU					|												
+| RELU					|
 | Max pooling	      	| 2x2 stride,  outputs 14x14x16
 |                       |
 | Convolution 5x5	    | 1x1 stride, valid padding, outputs 10x10x32
-| RELU					|											
+| RELU					|
 | Max pooling	      	| 2x2 stride,  outputs 5x5x32
 |
 | Flatten               | Outputs a 800 element tensor
@@ -80,7 +80,7 @@ Therefore, my final model consisted of the following layers:
 
 
 ### Model Training
-To optimise this neural network, the Adam optimiser was used with a learning rate of 0.001.  The batch size I used was 64, the number of epochs used was 50 and the loss function use was the *sparse* categorical cross-entropy function.  The reason why is because this avoids unnecessarily transforming the class labels into one-hot encoded vectors.  The sparse categorical cross-entropy loss function expects the integer ID of the ground truth target, so it makes computing the cross entropy more stable.  The choice of these parameters was mostly due to trial and error, combined with the hardware resources I have access to (I am using a P100 GPU) making a balance between speed and computational efficiency.  I set up a model checkpoint callback such that we save the model with the highest validation accuracy over the epochs.  Even though we finish training at 50 epochs, there may have been an epoch before this point that achieved a higher validation accuracy than what was seen at the end so we will use whatever model is saved that has the highest validation accuracy.
+To optimise this neural network, the Adam optimiser was used with a learning rate of 0.001.  The batch size I used was 64, the number of epochs used was 50 and the loss function use was the *sparse* categorical cross-entropy function.  The reason why is because this avoids unnecessarily transforming the class labels into one-hot encoded vectors.  The sparse categorical cross-entropy loss function expects the integer ID of the ground truth target, so it makes computing the cross entropy more stable.  The choice of these parameters was mostly due to trial and error, combined with the hardware resources I have access to (I am using a P100 GPU) making a balance between speed and computational efficiency.  I set up a model checkpoint callback such that we save the model with the highest validation accuracy over the epochs.  Even though we finish training at 50 epochs which may be considered much longer than most systems that train with the resolution of these kinds of images, there will inevitably have been an epoch before this point that achieved a higher validation accuracy than what was seen at the end so we will use whatever model is saved that has the highest validation accuracy.  Therefore, training with a large number of epochs, but enforcing a callback to save the model with the highest validation accuracy is a form of early stopping.
 
 ### Solution Approach
 
@@ -100,7 +100,7 @@ I found six German traffic signs on the web but they were very large in resoluti
 
 Here are the six German traffic signs that I found on the web:
 
-![][image5] ![][image6] ![][image7] 
+![][image5] ![][image6] ![][image7]
 ![][image8] ![][image9] ![][image10]
 
 The collection of these may be difficult to classify as all of them have varying backgrounds.  In addition, some of them have some slight orientation which we did not introduce in the training.  In particular, we did not introduce any augmentation.  I also decided to find a sign that was completely blank but only had a red outer border, which signifies that no vehicles are allowed.  This is indeed in our dataset, but the highly ambiguous nature of the red and white circular borders may make it harder to classify because there are many signs that do have this, but are only differentiated with the text inside the region.
@@ -179,16 +179,16 @@ Class #4 - Go straight or left - Probability: 1.5617133512782678e-34
 Class #5 - Roundabout mandatory - Probability: 1.0926069861380888e-36
 ```
 
-For all of the images shown above, most of them were extremely confident for the most probable class having probabilities of close to 1.0.  The only image that showed some confusion was the fourth one where no vehicles were allowed.  Turn right and no vehicles were close in their probabilities.  For the rest of the results, the other probabilities were close to 0, so our model was able to generalise well given this new data.  As such, our accuracy for this small dataset is 5 / 6 or 0.8333...  So in summary:
+For all of the images shown above, most of them were extremely confident for the most probable class having probabilities of close to 1.0.  The only image that showed some confusion was the fourth one where no vehicles were allowed.  Turn right and no vehicles were close in their probabilities.  For the rest of the results, the other probabilities were close to 0, so our model was able to generalise well given this new data.  As such, our accuracy for this small dataset is 5 / 6 or 0.8333...  The performance of 5 / 6 compared to the test dataset of ~0.96 is lower in performance, but with a larger sampling of images found on the Internet I am confident the performance can go higher in comparison to the test dataset.  So in summary:
 
-| Image			        |     Prediction	        					| 
-|:---------------------:|:------------------------:| 
+| Image			        |     Prediction	        					|
+|:---------------------:|:------------------------:|
 | 30 km/h     		    | 30 km/h
 | Bumpy Road     	    | Bumpy Road
 | Ahead Only			| Ahead Only
 | No vehicles      		| Turn right ahead
-| Go straight or left	| Go straight or left      				
-| General caution		| General caution     
+| Go straight or left	| Go straight or left
+| General caution		| General caution
 
 Finally, here's a sample of what the activations looked like after the first convolutional layer for the ahead only sign.
 
