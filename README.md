@@ -13,3 +13,5 @@ This directory contains a method using more advanced computer vision algorithms 
 ## Project #3 - Traffic Sign Classification Algorithm
 
 This directory contains a method using deep learning to classify traffic sign images.  We specifically explore the dataset used for training this system and provide an architecture that performs the classification well on the training, validation and test dataset.  Please navigate to the `CarND-Traffic-Sign-Classification-Project-P3` directory for more details.  The report can be found in this directory under `final_report.md`.
+
+**Note:**  The dataset is not stored on this repo, but it can be downloaded yourself.  Open up the notebook file in the  `CarND-Traffic-Sign-Classification-Project-P3` directory and run the cells that are relevant to downloading the data.
