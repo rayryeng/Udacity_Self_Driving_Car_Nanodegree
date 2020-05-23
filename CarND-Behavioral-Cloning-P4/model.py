@@ -181,8 +181,10 @@ def main(data_dir, model_checkpoint_dir='./models', model_output_dir='./checkpoi
         seed (int): Random seed for reproducibility
     
     Returns:
-        None - However, the final model gets saved to model_output_dir in
-               a file called steering.hdf5 for use with Tensorflow later
+        A tuple of two NumPy arrays that record the training and validation loss
+        at each epoch.  As a side-effect, the final model gets saved to
+        model_output_dir in a file called steering.hdf5 for use with Tensorflow
+        later
     """
     
     # Set to true if you want to see the loss plots
@@ -246,6 +248,8 @@ def main(data_dir, model_checkpoint_dir='./models', model_output_dir='./checkpoi
         plt.xlabel('Epoch')
         plt.legend(['Training', 'Validation'], loc='upper right')
         plt.show()
+    
+    return history.history['loss'], history.history['val_loss']
 
 if __name__ == "__main__":    
     parser = argparse.ArgumentParser(description='Behavioural Cloning Training')
