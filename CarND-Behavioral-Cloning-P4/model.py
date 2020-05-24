@@ -5,8 +5,6 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Input, AveragePooling2D, Conv2D, Dense, Dropout
 from tensorflow.keras.layers import Flatten, Lambda, ReLU, GlobalAveragePooling2D, Cropping2D
 from tensorflow.keras.callbacks import ModelCheckpoint
-from tensorflow.keras.applications import VGG16
-from tensorflow.keras import Model
 import cv2
 import csv
 import numpy as np
@@ -16,6 +14,7 @@ import glob
 from random import uniform, Random
 from sklearn.utils import shuffle
 from math import ceil
+
 
 def load_data(di, steering_correction=0.2, training_size=0.8, validation_size=0.1,
               test_size=0.1, seed=None):
@@ -104,6 +103,7 @@ def load_data(di, steering_correction=0.2, training_size=0.8, validation_size=0.
 
     return train_samples, validation_samples, test_samples
 
+
 def generator(samples, batch_size=32, prob_flip=0.3, seed=None):
     """ Generator to produce a batch of images for Keras
 
@@ -163,6 +163,7 @@ def generator(samples, batch_size=32, prob_flip=0.3, seed=None):
                 X, y = shuffle(X, y, random_state=r.randint(0, 2**32 - 1))
             yield X, y
 
+
 def define_model():
     """Define model architecture for inferring the steering angle given
     a front-facing camera image
@@ -196,37 +197,10 @@ def define_model():
 
     return model
 
-def define_model_transfer_learning():
-    base_model = VGG16(
-        weights='imagenet',  # Load weights pre-trained on ImageNet.
-        input_shape=(160, 320, 3),
-        include_top=False)  # Do not include the ImageNet classifier at the top.
 
-    base_model.trainable = False # Freeze base model
-
-    inputs = Input(shape=(160, 320, 3))
-    # We make sure that the base_model is running in inference mode here,
-    # by passing `training=False`. This is important for fine-tuning.
-    x = base_model(inputs, training=False)
-    # Convert features of shape `base_model.output_shape[1:]` to vectors
-    x = GlobalAveragePooling2D()(x)
-
-    # Dropout then another FC layer with 512 neurons
-    x = Dropout(0.5)(x)
-    x = Dense(512, activation='relu')(x)
-
-    # Dropout then mapping to 1 output neuron
-    # for regression
-    x = Dropout(0.5)(x)
-    outputs = Dense(1)(x)
-
-    model = Model(inputs, outputs)
-    model.compile(optimizer="adam", loss="mse")
-
-    return model
 def main(data_dir, model_checkpoint_dir='./models', model_output_dir='./checkpoint',
          training_size=0.8, validation_size=0.1, test_size=0.1, steering_correction=0.2,
-         prob_flip=0.3, batch_size=64, num_epochs=50, plot_loss=True, seed=42):
+         prob_flip=0.3, batch_size=128, num_epochs=50, plot_loss=True, seed=42):
     """ Main function to run for the training
 
     Args:
@@ -327,6 +301,7 @@ def main(data_dir, model_checkpoint_dir='./models', model_output_dir='./checkpoi
 
     return history.history['loss'], history.history['val_loss'], test_loss
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Behavioural Cloning Training')
     parser.add_argument("--data-dir", type=str, help="Directory where driving data is stored")
@@ -337,7 +312,7 @@ if __name__ == "__main__":
     parser.add_argument("--test-size", type=float, default=0.1, help="Fraction of the data to allocate to the test set")
     parser.add_argument("--steering_correction", type=float, default=0.2, help="Steering correction to add for left and right camera images")
     parser.add_argument("--prob-flip", type=float, default=0.3, help="Probability for horizontally flipping an image (augmentation)")
-    parser.add_argument("--batch-size", type=int, default=64, help="Batch size")
+    parser.add_argument("--batch-size", type=int, default=128, help="Batch size")
     parser.add_argument("--num-epochs", type=int, default=50, help="Number of epochs")
     parser.add_argument("--plot-loss", action="store_true", help="Plot the training and validation losses")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility")
