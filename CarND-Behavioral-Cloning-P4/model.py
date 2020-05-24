@@ -2,8 +2,11 @@
 import argparse
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Input, Conv2D, Dense, Dropout, Flatten, Lambda, ReLU
+from tensorflow.keras.layers import Input, AveragePooling2D, Conv2D, Dense, Dropout
+from tensorflow.keras.layers import Flatten, Lambda, ReLU, GlobalAveragePooling2D, Cropping2D
 from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras.applications import VGG16
+from tensorflow.keras import Model
 import cv2
 import csv
 import numpy as np
@@ -170,7 +173,9 @@ def define_model():
     """
     model = Sequential()
     model.add(Input(shape=(160, 320, 3), dtype='float32', name='input'))
-    model.add(Lambda(lambda x: (x - 127.5) / 127.5))
+    model.add(Lambda(lambda x: (x - 127.5) / 127.5, name='normalisation'))
+    model.add(Cropping2D(cropping=((50, 20), (0, 0)), name='cropping'))
+    model.add(AveragePooling2D(pool_size=(2, 2), name='downsample'))
     model.add(Conv2D(16, kernel_size=(8, 8), strides=(4, 4), padding='same',
               name='conv1'))
     model.add(ReLU(name='relu1'))
@@ -181,16 +186,44 @@ def define_model():
               name='conv3'))
     model.add(ReLU(name='relu3'))
     model.add(Flatten(name='flatten'))
-    model.add(Dropout(0.2, name='dropout1'))
+    model.add(Dropout(0.5, name='dropout1'))
     model.add(Dense(512, name='fc1'))
     model.add(ReLU(name='relu4'))
-    model.add(Dropout(0.2, name='dropout2'))
+    model.add(Dropout(0.5, name='dropout2'))
     model.add(Dense(1, name='output'))
 
     model.compile(optimizer="adam", loss="mse")
 
     return model
 
+def define_model_transfer_learning():
+    base_model = VGG16(
+        weights='imagenet',  # Load weights pre-trained on ImageNet.
+        input_shape=(160, 320, 3),
+        include_top=False)  # Do not include the ImageNet classifier at the top.
+
+    base_model.trainable = False # Freeze base model
+
+    inputs = Input(shape=(160, 320, 3))
+    # We make sure that the base_model is running in inference mode here,
+    # by passing `training=False`. This is important for fine-tuning.
+    x = base_model(inputs, training=False)
+    # Convert features of shape `base_model.output_shape[1:]` to vectors
+    x = GlobalAveragePooling2D()(x)
+
+    # Dropout then another FC layer with 512 neurons
+    x = Dropout(0.5)(x)
+    x = Dense(512, activation='relu')(x)
+
+    # Dropout then mapping to 1 output neuron
+    # for regression
+    x = Dropout(0.5)(x)
+    outputs = Dense(1)(x)
+
+    model = Model(inputs, outputs)
+    model.compile(optimizer="adam", loss="mse")
+
+    return model
 def main(data_dir, model_checkpoint_dir='./models', model_output_dir='./checkpoint',
          training_size=0.8, validation_size=0.1, test_size=0.1, steering_correction=0.2,
          prob_flip=0.3, batch_size=64, num_epochs=50, plot_loss=True, seed=42):

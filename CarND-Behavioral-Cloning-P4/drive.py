@@ -12,9 +12,11 @@ from PIL import Image
 from flask import Flask
 from io import BytesIO
 
-from keras.models import load_model
+## Ray - changed to work with TF 2.0
+from tensorflow.keras.models import load_model
 import h5py
-from keras import __version__ as keras_version
+## Ray - changed to work with TF 2.0
+from tensorflow.keras import __version__ as keras_version
 
 sio = socketio.Server()
 app = Flask(__name__)
