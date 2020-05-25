@@ -14,6 +14,7 @@ In this repo, it contains the projects I worked on for the Self-Driving Car Nano
 * `pillow`
 * `flask`
 * `aiohttp`
+* `jupyter`
 
 These can be installed through `pip` with the `requirements.txt` file included with this repo:
 

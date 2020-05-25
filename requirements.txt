@@ -1,6 +1,6 @@
 moviepy
 opencv-python
-tensorflow >= 2.0.0
+tensorflow>=2.0.0
 numpy
 matplotlib
 pandas
@@ -9,3 +9,4 @@ eventlet
 pillow
 flask
 aiohttp
+jupyter

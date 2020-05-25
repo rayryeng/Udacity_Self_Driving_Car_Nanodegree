@@ -84,6 +84,9 @@ def load_data(di, steering_correction=0.25, training_size=0.8, validation_size=0
 
                 # Directly add the image path and steering
                 steering = float(line[3])
+                # For the centre, left and right images, add the
+                # corresponding corrective factor to ensure we gravitate
+                # to the centre
                 for j, val in enumerate([0, steering_correction, -steering_correction]):
                     samples.append((line[j], steering + val))
 
