@@ -1,0 +1,11 @@
+moviepy
+opencv-python
+tensorflow >= 2.0.0
+numpy
+matplotlib
+pandas
+python-socketio
+eventlet
+pillow
+flask
+aiohttp
