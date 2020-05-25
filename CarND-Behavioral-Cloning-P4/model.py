@@ -16,7 +16,7 @@ from sklearn.utils import shuffle
 from math import ceil
 
 
-def load_data(di, steering_correction=0.2, training_size=0.8, validation_size=0.1,
+def load_data(di, steering_correction=0.25, training_size=0.8, validation_size=0.1,
               test_size=0.1, seed=None):
     """ Function that finds all image filenames and corresponding driving data
     from the CSV files generated from the simulator given the directory of where
@@ -199,7 +199,7 @@ def define_model():
 
 
 def main(data_dir, model_checkpoint_dir='./models', model_output_dir='./checkpoint',
-         training_size=0.8, validation_size=0.1, test_size=0.1, steering_correction=0.2,
+         training_size=0.8, validation_size=0.1, test_size=0.1, steering_correction=0.25,
          prob_flip=0.3, batch_size=128, num_epochs=50, plot_loss=True, seed=42):
     """ Main function to run for the training
 
@@ -310,7 +310,7 @@ if __name__ == "__main__":
     parser.add_argument("--training-size", type=float, default=0.8, help="Fraction of the data to allocate to the training set")
     parser.add_argument("--validation-size", type=float, default=0.1, help="Fraction of the data to allocate to the validation set")
     parser.add_argument("--test-size", type=float, default=0.1, help="Fraction of the data to allocate to the test set")
-    parser.add_argument("--steering_correction", type=float, default=0.2, help="Steering correction to add for left and right camera images")
+    parser.add_argument("--steering_correction", type=float, default=0.25, help="Steering correction to add for left and right camera images")
     parser.add_argument("--prob-flip", type=float, default=0.3, help="Probability for horizontally flipping an image (augmentation)")
     parser.add_argument("--batch-size", type=int, default=128, help="Batch size")
     parser.add_argument("--num-epochs", type=int, default=50, help="Number of epochs")
