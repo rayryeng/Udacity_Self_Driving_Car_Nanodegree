@@ -86,4 +86,3 @@ This directory contains a method for controlling the steering angle of the ego v
 
 
 **Note:** As of this writing, the provided simulator on https://github.com/udacity/self-driving-car-sim does not run on Mac OS Catalina.  Fortunately, there were efforts made to rebuild the simulator on Catalina and can be retrieved here: https://github.com/endymioncheung/CarND-MacCatalinaSimulator.  Just in case this repo no longer exists, I have forked it here: https://github.com/rayryeng/CarND-MacCatalinaSimulator.
-
