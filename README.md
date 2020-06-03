@@ -89,6 +89,8 @@ This directory contains a method for controlling the steering angle of the ego v
 
 ## Final Capstone Project
 
+This project was cloned originally from: https://github.com/udacity/CarND-Capstone
+
 You can find the implementation of the final capstone project in `CarND-Capstone`.  Please note that there is currently no way to run this on Mac OS Catalina.  I had to resort to using the Udacity workspace to develop this project.  Also note that the traffic sign detection algorithm was implemented in Tensorflow 1.3.0 because of the current hardware specifications of Carla, the autonomous vehicle that the project would be deployed on for testing.  The trained models for the traffic sign detection have been committed via Git LFS so this will need to be installed if you want to grab the models.
 
 Please visit <https://github.com/git-lfs/git-lfs/wiki/Installation> to install Git LFS. Once you do, after you clone this repo, please use the following to download the weights.
