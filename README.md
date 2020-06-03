@@ -86,3 +86,16 @@ This directory contains a method for controlling the steering angle of the ego v
 
 
 **Note:** As of this writing, the provided simulator on https://github.com/udacity/self-driving-car-sim does not run on Mac OS Catalina.  Fortunately, there were efforts made to rebuild the simulator on Catalina and can be retrieved here: https://github.com/endymioncheung/CarND-MacCatalinaSimulator.  Just in case this repo no longer exists, I have forked it here: https://github.com/rayryeng/CarND-MacCatalinaSimulator.
+
+## Final Capstone Project
+
+You can find the implementation of the final capstone project in `CarND-Capstone`.  Please note that there is currently no way to run this on Mac OS Catalina.  I had to resort to using the Udacity workspace to develop this project.  Also note that the traffic sign detection algorithm was implemented in Tensorflow 1.3.0 because of the current hardware specifications of Carla, the autonomous vehicle that the project would be deployed on for testing.  The trained models for the traffic sign detection have been committed via Git LFS so this will need to be installed if you want to grab the models.
+
+Please visit <https://github.com/git-lfs/git-lfs/wiki/Installation> to install Git LFS. Once you do, after you clone this repo, please use the following to download the weights.
+
+```sh
+$ cd <path to this repo>
+$ git lfs fetch
+```
+
+The weights will appear in `CarND-Capstone/ros/src/tl_detector/light_classification/train_model`.  There are two files - one is the trained model for the simulator and one for actual live images where the model finally gets deployed on Carla.
