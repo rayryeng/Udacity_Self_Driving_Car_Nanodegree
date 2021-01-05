@@ -5,7 +5,7 @@ In this repo, it contains the projects I worked on for the Self-Driving Car Nano
 ## Python Dependencies
 * `moviepy`
 * `opencv-python`
-* `tensorflow` - Note that the course uses version 1.x but I will be using 2.x.  Keras has been folded into Tensorflow from 2.0 and onwards so there's no need to install Keras separately.
+* `tensorflow` - Note that the course uses version 1.x but I will be using 2.x.  Keras has been folded into Tensorflow from 2.0 and onwards so there's no need to install Keras separately.  However, the exception to this rule is for the capstone project where it is required to use Tensorflow 1.x due to the requirements of the autonomous vehicle environment used for testing out the capstone.
 * `numpy`
 * `matplotlib`
 * `pandas`
@@ -21,6 +21,8 @@ These can be installed through `pip` with the `requirements.txt` file included w
 ```sh
 $ pip install -r requirements.txt
 ```
+
+For the capstone project, please use the `requirements.txt` file located in the `CarND-Capstone` directory instead.
 
 ## Project #1 - Simple Lane Finding Algorithm
 
